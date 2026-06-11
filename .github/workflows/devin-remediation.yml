@@ -1,0 +1,39 @@
+# Notifies the Devin remediation service when a security issue is labeled
+# `devin-fix`, or when a maintainer comments "devin: go ahead" to override.
+# The service (https://devin-cve-issue-action.fly.dev) triages the issue and
+# opens a Devin session to fix it.
+#
+# Required repo secrets:
+#   REMEDIATION_SERVICE_URL    e.g. https://devin-cve-issue-action.fly.dev
+#   REMEDIATION_WEBHOOK_SECRET shared secret matching the service's GITHUB_WEBHOOK_SECRET
+name: Devin Remediation Trigger
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: >
+      (github.event_name == 'issues' && github.event.label.name == 'devin-fix') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, 'devin: go ahead'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify remediation service
+        env:
+          SERVICE_URL: ${{ secrets.REMEDIATION_SERVICE_URL }}
+          WEBHOOK_SECRET: ${{ secrets.REMEDIATION_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$SERVICE_URL" ]; then
+            echo "REMEDIATION_SERVICE_URL not set — skipping." && exit 0
+          fi
+          curl -sS -X POST "$SERVICE_URL/webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Secret: $WEBHOOK_SECRET" \
+            -d @"$GITHUB_EVENT_PATH" \
+            --fail-with-body
