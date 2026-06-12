@@ -33,6 +33,8 @@ mako>=1.3.11,<2.0.0
 pyarrow>=24.0.0,<25.0.0
 # Security: CVE-2026-27459 - pyopenssl certificate validation
 pyopenssl>=26.0.0,<27.0.0
+# Security: CVE-2026-48523 (HIGH) - Algorithm Allow-List Bypass
+pyjwt>=2.13.0,<3.0.0
 # Security: CVE-2026-25645 (MEDIUM) - Insecure Temporary File
 requests>=2.33.0,<3.0.0
 
